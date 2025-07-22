@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Client",
+      "type": "go",
+      "request": "launch",
+      "program": "${workspaceFolder}/client/main.go"
+    },
+    {
+      "name": "Server",
+      "type": "go",
+      "request": "launch",
+      "program": "${workspaceFolder}/server/server.go"
+    }
+  ]
+}
