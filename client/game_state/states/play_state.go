@@ -10,6 +10,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
+var gridLinesImage *ebiten.Image
+
 type PlayState struct {
 	Game *Game
 }
@@ -23,19 +25,29 @@ func (m *PlayState) Draw(screen *ebiten.Image) {
 	drawGridLines(screen)
 }
 
-func drawGridLines(screen *ebiten.Image) {
-	for i := 0; i < 3; i++ {
-		gridLine := ebiten.NewImage(ScreenWidth, ScreenHeight)
+func init() {
+	createGridLines()
+}
+
+func createGridLines() {
+	gridLinesImage = ebiten.NewImage(ScreenWidth, ScreenHeight)
+	
+	// Draw horizontal lines
+	for i := 1; i < 3; i++ {
 		gridLinePosition := float32(i * TileHeight)
-		vector.StrokeLine(gridLine, 0, gridLinePosition, float32(ScreenWidth), gridLinePosition, float32(GridLineWidth), color.RGBA{0x00, 0x00, 0x00, 0xff}, false)
-		screen.DrawImage(gridLine, nil)
+		vector.StrokeLine(gridLinesImage, 0, gridLinePosition, float32(ScreenWidth), gridLinePosition, float32(GridLineWidth), color.RGBA{0x00, 0x00, 0x00, 0xff}, false)
 	}
 
-	for i := 0; i < 3; i++ {
-		gridLine := ebiten.NewImage(ScreenWidth, ScreenHeight)
+	// Draw vertical lines
+	for i := 1; i < 3; i++ {
 		gridLinePosition := float32(i * TileWidth)
-		vector.StrokeLine(gridLine, gridLinePosition, 0, gridLinePosition, float32(ScreenHeight), float32(GridLineWidth), color.RGBA{0x00, 0x00, 0x00, 0xff}, false)
-		screen.DrawImage(gridLine, nil)
+		vector.StrokeLine(gridLinesImage, gridLinePosition, 0, gridLinePosition, float32(ScreenHeight), float32(GridLineWidth), color.RGBA{0x00, 0x00, 0x00, 0xff}, false)
+	}
+}
+
+func drawGridLines(screen *ebiten.Image) {
+	if gridLinesImage != nil {
+		screen.DrawImage(gridLinesImage, nil)
 	}
 }
 

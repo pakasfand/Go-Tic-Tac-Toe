@@ -182,6 +182,8 @@ func (g *Game) TryToSelectTileAtPosition(x, y int) bool {
 }
 
 func (g *Game) drawTiles(screen *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+	
 	for row := 0; row < 3; row++ {
 		for col := 0; col < 3; col++ {
 			tileState := g.ServerGameData.Board[row][col]
@@ -200,7 +202,8 @@ func (g *Game) drawTiles(screen *ebiten.Image) {
 				tileImage = circleImage
 			}
 
-			op := &ebiten.DrawImageOptions{}
+			// Reset the transformation matrix for reuse
+			op.GeoM.Reset()
 			op.GeoM.Scale(float64(TileWidth)/float64(tileImage.Bounds().Dx()), float64(TileHeight)/float64(tileImage.Bounds().Dy()))
 			op.GeoM.Translate(float64(tileX), float64(tileY))
 			screen.DrawImage(tileImage, op)
