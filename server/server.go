@@ -4,16 +4,33 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	
-	. "server/models"
+	"strings"
+
 	. "server/handlers"
+	. "server/models"
 	. "shared_types"
 
 	"github.com/gorilla/websocket"
 )
 
 func main() {
-	var upgrader = websocket.Upgrader{}
+	// Serve static files (client WASM build output)
+	fs := http.FileServer(http.Dir("../client"))
+	    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        // Set Content-Type explicitly for .js files
+        if strings.HasSuffix(r.URL.Path, ".js") {
+            w.Header().Set("Content-Type", "application/javascript")
+        }
+        if strings.HasSuffix(r.URL.Path, ".wasm") {
+            w.Header().Set("Content-Type", "application/wasm")
+        }
+
+        fs.ServeHTTP(w, r)
+    })
+
+	var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
+		return true // ⚠️ Allow all origins for dev; lock this down for production
+	}}
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
 
