@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"strconv"
 	"sync"
-	
+
 	. "shared_types"
 
 	"github.com/gorilla/websocket"
@@ -22,15 +22,18 @@ type Game struct {
 	mu      sync.Mutex
 }
 
-func (g *Game) AddPlayer(conn *websocket.Conn, pt PlayerType) {
+func (g *Game) AddPlayer(conn *websocket.Conn, pt PlayerType) string {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	player := Player{
 		Conn:       conn,
 		PlayerType: pt,
+		Id:         generateRandomID(),
 	}
 	g.Players = append(g.Players, player)
+
+	return player.Id
 }
 
 func (g *Game) IsFull() bool {
@@ -63,11 +66,11 @@ func (g *Game) Broadcast(message OutboundMessage) {
 	}
 }
 
-func (g *Game) MakeMove(move GameMove, playerType PlayerType) bool {
+func (g *Game) MakeMove(move *GameMove, player *Player) bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.State.Turn != playerType {
+	if g.State.CurrentPlayerId != player.Id {
 		return false // Not this player's turn
 	}
 
@@ -81,18 +84,20 @@ func (g *Game) MakeMove(move GameMove, playerType PlayerType) bool {
 	}
 
 	// Make the move
-	if playerType == PlayerTypeCross {
+	if player.PlayerType == PlayerTypeCross {
 		g.State.Board[move.Row][move.Col] = TileStateCross
 	} else {
 		g.State.Board[move.Row][move.Col] = TileStateCircle
 	}
 
 	// Switch turns
-	if g.State.Turn == PlayerTypeCircle {
-		g.State.Turn = PlayerTypeCross
+	if player.Id == g.Players[0].Id {
+		g.State.CurrentPlayerId = g.Players[1].Id
 	} else {
-		g.State.Turn = PlayerTypeCircle
+		g.State.CurrentPlayerId = g.Players[0].Id
 	}
+
+	move.PlayerType = player.PlayerType
 
 	return true
 }
@@ -110,9 +115,28 @@ func CreateNewGame() *Game {
 	}
 
 	game := &Game{ID: gameID}
+	game.State.Board = [3][3]TileState{
+		{TileStateEmpty, TileStateEmpty, TileStateEmpty},
+		{TileStateEmpty, TileStateEmpty, TileStateEmpty},
+		{TileStateEmpty, TileStateEmpty, TileStateEmpty},
+	}
 	games[gameID] = game
+	log.Printf("Number of active games: %d", len(games))
 	log.Printf("Created new game with ID: %s", gameID)
 	return game
+}
+
+func (g *Game) DisconnectGame() bool {
+	gamesMutex.Lock()
+	defer gamesMutex.Unlock()
+
+	if _, exists := games[g.ID]; exists {
+		delete(games, g.ID)
+		log.Printf("Game %s disconnected. Number of active games: %d", g.ID, len(games))
+		return true
+	}
+
+	return false
 }
 
 func FindGame(gameID string) *Game {
@@ -121,6 +145,44 @@ func FindGame(gameID string) *Game {
 	return games[gameID]
 }
 
+func (g *Game) FindPlayer(playerId string) *Player {
+	gamesMutex.RLock()
+	defer gamesMutex.RUnlock()
+
+	for _, player := range g.Players {
+		if player.Id == playerId {
+			return &player
+		}
+	}
+	return nil
+}
+
+func (g *Game) FindPlayerFromType(playerType PlayerType) *Player {
+	for _, player := range g.Players {
+		if player.PlayerType == playerType {
+			return &player
+		}
+	}
+	return nil
+}
+
+func FindGameFromConnection(conn *websocket.Conn) *Game {
+	for _, game := range games {
+		for _, player := range game.Players {
+			if player.Conn == conn {
+				return game
+			}
+		}
+	}
+
+	return nil
+}
+
 func generateGameID() string {
-	return strconv.Itoa(rand.Intn(900000) + 100000) // 6-digit number
+	// return strconv.Itoa(rand.Intn(900000) + 100000) // 6-digit number
+	return strconv.Itoa(rand.Intn(9) + 1) // 1-digit number (1-9)
+}
+
+func generateRandomID() string {
+	return strconv.Itoa(rand.Intn(900000) + 1000000) // 6-digit number
 }

@@ -13,13 +13,15 @@ import (
 func HandleCreateGame(c *websocket.Conn) {
 	game := CreateNewGame()
 	playerType := PlayerType(rand.Intn(2))
-	game.AddPlayer(c, playerType)
+	playerId := game.AddPlayer(c, playerType)
 
 	// Send game ID back to client
 	response := OutboundMessage{
 		Type:       "game_created",
 		GameID:     game.ID,
 		PlayerType: playerType,
+		GameData:   &game.State,
+		PlayerId:   playerId,
 	}
 
 	responseBytes, err := json.Marshal(response)

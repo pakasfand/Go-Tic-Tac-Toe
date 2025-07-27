@@ -11,4 +11,5 @@ type OutboundMessage struct {
 	Move       *GameMove   `json:"move,omitempty"`
 	GameData   *GameData   `json:"game_data,omitempty"`
 	PlayerType PlayerType  `json:"player_type,omitempty"`
+	PlayerId   string      `json:"player_id,omitempty"`
 }

@@ -16,17 +16,17 @@ import (
 func main() {
 	// Serve static files (client WASM build output)
 	fs := http.FileServer(http.Dir("../client"))
-	    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        // Set Content-Type explicitly for .js files
-        if strings.HasSuffix(r.URL.Path, ".js") {
-            w.Header().Set("Content-Type", "application/javascript")
-        }
-        if strings.HasSuffix(r.URL.Path, ".wasm") {
-            w.Header().Set("Content-Type", "application/wasm")
-        }
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Set Content-Type explicitly for .js files
+		if strings.HasSuffix(r.URL.Path, ".js") {
+			w.Header().Set("Content-Type", "application/javascript")
+		}
+		if strings.HasSuffix(r.URL.Path, ".wasm") {
+			w.Header().Set("Content-Type", "application/wasm")
+		}
 
-        fs.ServeHTTP(w, r)
-    })
+		fs.ServeHTTP(w, r)
+	})
 
 	var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
 		return true // ⚠️ Allow all origins for dev; lock this down for production
@@ -43,12 +43,19 @@ func main() {
 		msgChan := make(chan []byte, 10)
 		errChan := make(chan error, 10)
 
+		c.SetCloseHandler(func(code int, text string) error {
+			game := FindGameFromConnection(c)
+			if game != nil {
+				HandleLeaveGame(c, game.ID)
+			}
+			return nil
+		})
+
 		go readMessages(c, msgChan, errChan)
 
 		for {
 			select {
 			case message := <-msgChan:
-				// handle message...
 				var msg InboundMessage
 				if err := json.Unmarshal(message, &msg); err != nil {
 					log.Println("Could not unmarshal JSON:", err)
@@ -61,11 +68,11 @@ func main() {
 				case MessageTypeJoinGame:
 					HandleJoinGame(c, msg.GameID)
 				case MessageTypeMakeMove:
-					if msg.Move != nil {
-						HandleMakeMove(c, msg.GameID, *msg.Move)
-					}
+					HandleMakeMove(c, msg.GameID, msg.PlayerId, msg.Move)
 				case MessageTypeRequestPlayAgain:
 					HandleRequestPlayAgain(c, msg.GameID)
+				case MessageLeaveGame:
+					HandleLeaveGame(c, msg.GameID)
 				}
 			case err := <-errChan:
 				log.Println("Error:", err)

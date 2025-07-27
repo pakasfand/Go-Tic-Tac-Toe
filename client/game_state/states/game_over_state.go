@@ -3,8 +3,8 @@ package states
 import (
 	"image/color"
 
-	. "shared_types"
 	. "client/models"
+	. "shared_types"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -13,20 +13,16 @@ import (
 )
 
 type GameOverState struct {
-	Game *Game
+	Game             *Game
+	rematchRequested bool
 }
 
 func (m *GameOverState) Draw(screen *ebiten.Image) {
-	g := m.Game
-	
 	var msg string
-	switch g.ServerGameData.GetWinner() {
-	case "Cross":
-		msg = "Cross wins! Press R to restart."
-	case "Circle":
-		msg = "Circle wins! Press R to restart."
-	default:
-		msg = "It's a draw! Press R to restart."
+	if m.rematchRequested {
+		msg = "Rematch requested. Waiting for opponent to accept..."
+	} else {
+		msg = "Press R to request a rematch."
 	}
 
 	bounds, _ := font.BoundString(basicfont.Face7x13, msg)
@@ -51,21 +47,21 @@ func (m *GameOverState) Update() error {
 	g := m.Game
 
 	if g.isKeyJustReleased(ebiten.KeyR) {
-		g.sendMessage(OutboundMessage{Type: MessageTypeRequestPlayAgain, GameID: g.gameID})
-		// g.gameState = ClientStateMenu
+		m.rematchRequested = true
+		g.SendMessage(OutboundMessage{Type: MessageTypeRequestPlayAgain, GameID: g.GameID})
 	} else if g.isKeyJustReleased(ebiten.KeyEscape) {
 		// Reset state
-		g.ServerGameData = GameData{
+		g.GameData = GameData{
 			Board: [3][3]TileState{
 				{TileStateEmpty, TileStateEmpty, TileStateEmpty},
 				{TileStateEmpty, TileStateEmpty, TileStateEmpty},
 				{TileStateEmpty, TileStateEmpty, TileStateEmpty},
 			},
-			Turn: 0,
 		}
-		g.gameData = ClientStateMenu
+		g.SendMessage(OutboundMessage{Type: MessageLeaveGame, GameID: g.GameID})
+		g.clientState = ClientStateMenu
 		g.StateMachine.SetState(&MenuState{Game: g})
-		g.gameID = ""
+		g.GameID = ""
 	}
 	return nil
 }

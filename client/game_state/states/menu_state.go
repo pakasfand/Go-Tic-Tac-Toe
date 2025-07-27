@@ -3,8 +3,8 @@ package states
 import (
 	"image/color"
 
-	. "shared_types"
 	. "client/models"
+	. "shared_types"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -30,9 +30,9 @@ func (m *MenuState) Draw(screen *ebiten.Image) {
 
 	text.Draw(screen, title, basicfont.Face7x13, x, y, color.White)
 
-	if g.gameID != "" && g.gameData == ClientStateMenu {
+	if g.GameID != "" && g.clientState == ClientStateMenu {
 		// Show game ID for sharing
-		gameIDText := "Game ID: " + g.gameID
+		gameIDText := "Game ID: " + g.GameID
 		bounds, _ = font.BoundString(basicfont.Face7x13, gameIDText)
 		textW = (bounds.Max.X - bounds.Min.X).Ceil()
 		x = (ScreenWidth - textW) / 2
@@ -73,11 +73,17 @@ func (m *MenuState) Update() error {
 	// Handle menu navigation
 	if g.isKeyJustReleased(ebiten.Key1) {
 		// Create new game
-		g.sendMessage(OutboundMessage{Type: MessageTypeCreateGame})
+		g.SendMessage(OutboundMessage{Type: MessageTypeCreateGame})
 	} else if g.isKeyJustReleased(ebiten.Key2) {
 		// Join existing game
-		m.Game.gameData = ClientStateEnteringGameID
+		m.Game.clientState = ClientStateEnteringGameID
 		m.Game.StateMachine.SetState(&EnteringGameIdState{Game: g})
+	} else if g.isKeyJustReleased(ebiten.KeyEscape) {
+		g.SendMessage(OutboundMessage{Type: MessageLeaveGame, GameID: g.GameID})
+		g.clientState = ClientStateMenu
+		g.StateMachine.SetState(&MenuState{Game: g})
+		g.inputBuffer = ""
+		g.GameID = ""
 	}
 	return nil
 }

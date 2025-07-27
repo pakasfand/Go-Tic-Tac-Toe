@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func HandleMakeMove(c *websocket.Conn, gameID string, move GameMove) {
+func HandleMakeMove(c *websocket.Conn, gameID string, playerId string, move *GameMove) {
 	game := FindGame(gameID)
 	if game == nil {
 		response := OutboundMessage{
@@ -21,15 +21,8 @@ func HandleMakeMove(c *websocket.Conn, gameID string, move GameMove) {
 		return
 	}
 
-	var playerType PlayerType
-	for _, player := range game.Players {
-		if player.Conn == c {
-			playerType = player.PlayerType
-			break
-		}
-	}
-
-	if !game.MakeMove(move, playerType) {
+	player := game.FindPlayer(playerId)
+	if !game.MakeMove(move, player) {
 		response := OutboundMessage{
 			Type: "error",
 			Data: "Invalid move or not your turn",
@@ -41,19 +34,27 @@ func HandleMakeMove(c *websocket.Conn, gameID string, move GameMove) {
 
 	// Broadcast the move to all players
 	moveMsg := OutboundMessage{
-		Type: MessageTypeMakeMove,
-		Move: &move,
+		Type:     MessageTypeMakeMove,
+		Move:     move,
+		GameData: &game.State,
 	}
 	game.Broadcast(moveMsg)
 
 	// Check for game end
 	if game.State.IsGameOver() {
-		game.State.Winner = game.State.GetWinner()
+
+		var winnerType, hasWinner = game.State.GetWinnerType()
+		if hasWinner {
+			game.State.Winner = game.FindPlayerFromType(PlayerType(winnerType)).Id
+			log.Printf("Game %s ended. Winner: %s", game.ID, game.State.Winner)
+		} else {
+			game.State.Winner = ""
+		}
+
 		gameOverMsg := OutboundMessage{
 			Type:     "game_over",
 			GameData: &game.State,
 		}
 		game.Broadcast(gameOverMsg)
-		log.Printf("Game %s ended. Winner: %s", game.ID, game.State.Winner)
 	}
 }

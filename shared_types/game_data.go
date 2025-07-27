@@ -1,14 +1,16 @@
 package types
 
 type GameData struct {
-	Board  [3][3]TileState `json:"board"`
-	Turn   PlayerType      `json:"turn"`
-	Winner string          `json:"winner,omitempty"`
+	Board           [3][3]TileState `json:"board"`
+	CurrentPlayerId string          `json:"current_player_id"`
+	Winner          string          `json:"winner,omitempty"`
 }
 
 func (gd *GameData) IsGameOver() bool {
 	// Check for winner first
-	if gd.GetWinner() != "" {
+	_, hasWinner := gd.GetWinnerType()
+
+	if hasWinner {
 		return true
 	}
 
@@ -23,53 +25,41 @@ func (gd *GameData) IsGameOver() bool {
 	return true
 }
 
-func (gd *GameData) GetWinner() string {
+func (gd *GameData) GetWinnerType() (TileState, bool) {
 	// Check rows
 	for row := 0; row < 3; row++ {
-		if gd.Board[row][0] != TileStateEmpty &&
-			gd.Board[row][0] == gd.Board[row][1] &&
+		tileType := gd.Board[row][0]
+		if tileType != TileStateEmpty &&
+			tileType == gd.Board[row][1] &&
 			gd.Board[row][1] == gd.Board[row][2] {
-			if gd.Board[row][0] == TileStateCross {
-				return "Cross"
-			} else {
-				return "Circle"
-			}
+			return tileType, true
 		}
 	}
 
 	// Check columns
 	for col := 0; col < 3; col++ {
-		if gd.Board[0][col] != TileStateEmpty &&
-			gd.Board[0][col] == gd.Board[1][col] &&
+		tileType := gd.Board[0][col]
+		if tileType != TileStateEmpty &&
+			tileType == gd.Board[1][col] &&
 			gd.Board[1][col] == gd.Board[2][col] {
-			if gd.Board[0][col] == TileStateCross {
-				return "Cross"
-			} else {
-				return "Circle"
-			}
+			return tileType, true
 		}
 	}
 
 	// Check diagonals
-	if gd.Board[0][0] != TileStateEmpty &&
-		gd.Board[0][0] == gd.Board[1][1] &&
+	tileType := gd.Board[0][0]
+	if tileType != TileStateEmpty &&
+		tileType == gd.Board[1][1] &&
 		gd.Board[1][1] == gd.Board[2][2] {
-		if gd.Board[0][0] == TileStateCross {
-			return "Cross"
-		} else {
-			return "Circle"
-		}
+		return tileType, true
 	}
 
-	if gd.Board[0][2] != TileStateEmpty &&
-		gd.Board[0][2] == gd.Board[1][1] &&
+	tileType = gd.Board[0][2]
+	if tileType != TileStateEmpty &&
+		tileType == gd.Board[1][1] &&
 		gd.Board[1][1] == gd.Board[2][0] {
-		if gd.Board[0][2] == TileStateCross {
-			return "Cross"
-		} else {
-			return "Circle"
-		}
+		return tileType, true
 	}
 
-	return ""
+	return TileStateEmpty, false
 }

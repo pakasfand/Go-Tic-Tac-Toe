@@ -3,8 +3,8 @@ package states
 import (
 	"image/color"
 
-	. "shared_types"
 	. "client/models"
+	. "shared_types"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -18,7 +18,7 @@ type EnteringGameIdState struct {
 
 func (m *EnteringGameIdState) Draw(screen *ebiten.Image) {
 	g := m.Game
-	
+
 	screen.Fill(color.RGBA{0x2c, 0x3e, 0x50, 0xff}) // Dark blue background
 
 	title := "Tic Tac Toe"
@@ -62,15 +62,15 @@ func (m *EnteringGameIdState) Update() error {
 	}
 	if g.isKeyJustReleased(ebiten.KeyEnter) {
 		if g.inputBuffer != "" {
-			g.sendMessage(OutboundMessage{Type: MessageTypeJoinGame, GameID: g.inputBuffer})
+			g.SendMessage(OutboundMessage{Type: MessageTypeJoinGame, GameID: g.inputBuffer})
 			g.inputBuffer = ""
 		}
 	}
 	if g.isKeyJustReleased(ebiten.KeyEscape) {
-		g.gameData = ClientStateMenu
-		g.StateMachine.SetState(&MenuState{})
+		g.clientState = ClientStateMenu
+		g.StateMachine.SetState(&MenuState{Game: g})
 		g.inputBuffer = ""
-		g.gameID = ""
+		g.GameID = ""
 	}
 
 	return nil

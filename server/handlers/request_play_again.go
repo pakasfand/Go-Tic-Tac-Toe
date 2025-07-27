@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"log"
+	"math/rand/v2"
 	. "server/models"
 	. "shared_types"
 
@@ -42,7 +43,7 @@ func HandleRequestPlayAgain(c *websocket.Conn, gameID string) {
 			{TileStateEmpty, TileStateEmpty, TileStateEmpty},
 			{TileStateEmpty, TileStateEmpty, TileStateEmpty},
 		},
-		Turn: 0,
+		CurrentPlayerId: game.Players[rand.IntN(len(game.Players))].Id,
 	}
 
 	resetMsg := OutboundMessage{

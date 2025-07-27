@@ -3,12 +3,11 @@ package main
 import (
 	_ "image/png"
 	"log"
-	"net/url"
+	"syscall/js"
 
-	. "client/models"
 	. "client/game_state/states"
+	. "client/models"
 
-	"github.com/gorilla/websocket"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -18,7 +17,7 @@ func main() {
 
 	// Connect to server
 	conn := connectToServer()
-	if conn == nil {
+	if conn.IsUndefined() || conn.IsNull() {
 		log.Fatal("Failed to connect to server.")
 	}
 
@@ -32,16 +31,12 @@ func main() {
 	}
 }
 
-func connectToServer() *websocket.Conn {
-	u := url.URL{Scheme: "ws", Host: "localhost:8080", Path: "/ws"}
-	log.Printf("connecting to %s", u.String())
+func connectToServer() js.Value {
+	url := "ws://localhost:8080/ws"
+	log.Printf("connecting to %s", url)
 
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		log.Printf("dial: %v", err)
-		return nil
-	}
+	ws := js.Global().Get("WebSocket").New(url)
 
-	log.Println("Connected to server successfully")
-	return c
+	log.Println("WebSocket connection initiated")
+	return ws
 }
