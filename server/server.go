@@ -15,7 +15,7 @@ import (
 
 func main() {
 	// Serve static files (client WASM build output)
-	fs := http.FileServer(http.Dir("../client"))
+	fs := http.FileServer(http.Dir("./client"))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Set Content-Type explicitly for .js files
 		if strings.HasSuffix(r.URL.Path, ".js") {

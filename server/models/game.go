@@ -179,8 +179,7 @@ func FindGameFromConnection(conn *websocket.Conn) *Game {
 }
 
 func generateGameID() string {
-	// return strconv.Itoa(rand.Intn(900000) + 100000) // 6-digit number
-	return strconv.Itoa(rand.Intn(9) + 1) // 1-digit number (1-9)
+	return strconv.Itoa(rand.Intn(900000) + 100000) // 6-digit number
 }
 
 func generateRandomID() string {

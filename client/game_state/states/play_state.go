@@ -38,7 +38,7 @@ func drawHeader(g *Game, screen *ebiten.Image) {
 	if g.GameData.IsGameOver() {
 		if g.GameData.Winner == "" {
 			msg = "Draw!"
-			textColor = color.RGBA{255, 255, 255, 255}
+			textColor = color.RGBA{0, 0, 0, 255}
 		} else if g.GameData.Winner == g.PlayerId {
 			msg = "You Win!"
 			textColor = color.RGBA{0, 128, 0, 255}
@@ -57,7 +57,7 @@ func drawHeader(g *Game, screen *ebiten.Image) {
 	}
 	if g.opponentDisconnected {
 		msg = "Opponent Disconnected!"
-		textColor = color.RGBA{255, 255, 255, 255}
+		textColor = color.RGBA{0, 0, 0, 255}
 
 		// Draw instructions
 		instruction := "Press Esc to navigate back the main menu."

@@ -8,7 +8,9 @@
     <script src="wasm_exec.js"></script>
     <script>
       const go = new Go();
-      WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then(result => {
+      // Add cache-busting parameter to force reload
+      const wasmUrl = "main.wasm?v=" + Date.now();
+      WebAssembly.instantiateStreaming(fetch(wasmUrl), go.importObject).then(result => {
         go.run(result.instance);
       });
     </script>

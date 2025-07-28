@@ -32,8 +32,23 @@ func main() {
 }
 
 func connectToServer() js.Value {
-	url := "ws://localhost:8080/ws"
-	log.Printf("connecting to %s", url)
+	// Get the current location from the browser
+	location := js.Global().Get("location")
+	hostname := location.Get("hostname").String()
+	port := location.Get("port").String()
+
+	var host string
+	if port != "" {
+		host = hostname + ":" + port
+	} else {
+		host = hostname
+	}
+
+	log.Printf("Hostname: %s, Port: %s", hostname, port)
+	log.Printf("Dynamic host constructed: %s", host)
+
+	url := "ws://" + host + "/ws"
+	log.Printf("WebSocket URL: %s", url)
 
 	ws := js.Global().Get("WebSocket").New(url)
 

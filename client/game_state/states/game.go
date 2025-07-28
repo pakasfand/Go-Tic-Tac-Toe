@@ -163,8 +163,10 @@ func (g *Game) handleServerMessage(message []byte) {
 	case "game_over":
 		g.GameData = *response.GameData
 		time.AfterFunc(5*time.Second, func() {
-			g.clientState = ClientStateGameOver
-			g.StateMachine.SetState(&GameOverState{Game: g})
+			if g.clientState == ClientStatePlaying {
+				g.clientState = ClientStateGameOver
+				g.StateMachine.SetState(&GameOverState{Game: g})
+			}
 		})
 	case "game_reset":
 		g.clientState = ClientStatePlaying
@@ -310,7 +312,7 @@ func (g *Game) handleTextInput(key rune) {
 			g.inputBuffer = g.inputBuffer[:len(g.inputBuffer)-1]
 		}
 	} else if key >= '0' && key <= '9' {
-		if len(g.inputBuffer) < 1 { // Limit game ID length
+		if len(g.inputBuffer) < 6 { // Limit game ID length to 6 digits
 			g.inputBuffer += string(key)
 		}
 	}

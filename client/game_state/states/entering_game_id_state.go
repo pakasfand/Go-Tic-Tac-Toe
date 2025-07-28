@@ -31,8 +31,12 @@ func (m *EnteringGameIdState) Draw(screen *ebiten.Image) {
 
 	text.Draw(screen, title, basicfont.Face7x13, x, y, color.White)
 
-	// Show input prompt
-	prompt := "Enter Game ID: " + g.inputBuffer + "_"
+	// Show input prompt with 6-digit format
+	displayBuffer := g.inputBuffer
+	for len(displayBuffer) < 6 {
+		displayBuffer += "_"
+	}
+	prompt := "Enter Game ID: " + displayBuffer
 	bounds, _ = font.BoundString(basicfont.Face7x13, prompt)
 	textW = (bounds.Max.X - bounds.Min.X).Ceil()
 	x = (ScreenWidth - textW) / 2
@@ -40,7 +44,13 @@ func (m *EnteringGameIdState) Draw(screen *ebiten.Image) {
 
 	text.Draw(screen, prompt, basicfont.Face7x13, x, y, color.White)
 
-	instructions := "Press Enter to join, Escape to cancel"
+	// Show instructions based on current input length
+	var instructions string
+	if len(g.inputBuffer) == 6 {
+		instructions = "Press Enter to join, Escape to cancel"
+	} else {
+		instructions = "Enter 6-digit Game ID, Escape to cancel"
+	}
 	bounds, _ = font.BoundString(basicfont.Face7x13, instructions)
 	textW = (bounds.Max.X - bounds.Min.X).Ceil()
 	x = (ScreenWidth - textW) / 2
@@ -52,16 +62,20 @@ func (m *EnteringGameIdState) Draw(screen *ebiten.Image) {
 func (m *EnteringGameIdState) Update() error {
 	g := m.Game
 
-	for key := ebiten.Key0; key <= ebiten.Key9; key++ {
-		if g.isKeyJustReleased(key) {
-			g.handleTextInput(rune('0' + int(key-ebiten.Key0)))
+	// Only allow input if we haven't reached 6 digits yet
+	if len(g.inputBuffer) < 6 {
+		for key := ebiten.Key0; key <= ebiten.Key9; key++ {
+			if g.isKeyJustReleased(key) {
+				g.handleTextInput(rune('0' + int(key-ebiten.Key0)))
+			}
 		}
 	}
+
 	if g.isKeyJustReleased(ebiten.KeyBackspace) {
 		g.handleTextInput('\b')
 	}
 	if g.isKeyJustReleased(ebiten.KeyEnter) {
-		if g.inputBuffer != "" {
+		if len(g.inputBuffer) == 6 {
 			g.SendMessage(OutboundMessage{Type: MessageTypeJoinGame, GameID: g.inputBuffer})
 			g.inputBuffer = ""
 		}

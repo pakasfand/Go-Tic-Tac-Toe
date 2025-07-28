@@ -1,0 +1,22 @@
+# Docker ignore file for Go Tic-Tac-Toe
+.git
+.gitignore
+README.md
+DEPLOYMENT.md
+deploy.bat
+deployment/
+deployment.tar.gz
+*.tar.gz
+
+# Development files
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+.tmp
